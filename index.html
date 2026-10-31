@@ -59,8 +59,8 @@
   #venueBtn b{font-size:22px;font-weight:900;letter-spacing:.01em;color:#fff}
   #venueBtn .car{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.4;stroke-linecap:round;transition:transform .25s}
   #mast.open #venueBtn .car{transform:rotate(180deg)}
-  #venues{position:absolute;top:76px;left:0;min-width:100%;border-radius:22px;padding:8px;opacity:0;transform:translateY(-6px);pointer-events:none;transition:.22s;background:rgba(6,9,13,.96)}
-  #mast.open #venues{opacity:1;transform:none;pointer-events:auto}
+  #venues{position:fixed;z-index:10;box-sizing:border-box;border-radius:22px;padding:8px;opacity:0;transform:translateY(-6px);pointer-events:none;transition:.22s;background:rgba(6,9,13,.96)}
+  #venues.open{opacity:1;transform:none;pointer-events:auto}
   #venues h4{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;opacity:.45;font-weight:700;padding:8px 10px 4px}
   #venues button{display:flex;align-items:center;gap:12px;width:100%;padding:10px;border-radius:14px;font-size:16px;font-weight:800;font-style:italic;text-transform:uppercase}
   #venues button:hover{background:rgba(255,255,255,.07)}
@@ -218,7 +218,6 @@
     #venueBtn{flex:1;justify-content:space-between;padding:4px 8px 4px 2px;min-width:0}
     #venueBtn small{font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     #venueBtn b{font-size:18px}
-    #venues{top:68px}
     #bottombar{left:0;right:0;bottom:0;transform:none;max-width:none;height:auto;padding:12px 0 calc(12px + env(safe-area-inset-bottom)) 12px;border-radius:24px 24px 0 0;border-left:0;border-right:0;border-bottom:0}
     #bottombar #chips{padding-right:40px;-webkit-mask-image:linear-gradient(90deg,#000 78%,transparent);mask-image:linear-gradient(90deg,#000 78%,transparent)}
     body.intro #bottombar{transform:translateY(10px)}
@@ -1176,9 +1175,13 @@ function renderBtn() { const c = CATS.find(x => x.id === catFilter), n = countOf
 function closeDD() { chip.classList.remove('open'); panel.classList.remove('open'); document.body.classList.remove('sheet'); }
 new ResizeObserver(zMoreUpd).observe(zl);
 $('#zoneBtn').onclick = e => { e.stopPropagation(); const was = panel.classList.contains('open'); closeDD(); if (!was) { if (!isMobile) { const r = chip.getBoundingClientRect(); panel.style.left = Math.max(12, r.left + r.width / 2 - 200) + 'px'; panel.style.bottom = (innerHeight - r.top + 18) + 'px'; } chip.classList.add('open'); panel.classList.add('open'); document.body.classList.add('sheet'); } };
-addEventListener('pointerdown', e => { if (!e.target.closest('.chip') && !e.target.closest('.dd')) closeDD(); if (!e.target.closest('#mast')) $('#mast').classList.remove('open'); });
-$('#venueBtn').onclick = () => { closeDD(); $('#mast').classList.toggle('open'); };
-document.querySelectorAll('#venues button').forEach(b => b.onclick = () => { $('#mast').classList.remove('open'); if (b.dataset.v !== 'kite') { const t = $('#toast'); t.textContent = b.innerText.split('\n').slice(0, 2).join(' · ').replace(/Soon$/, '') + ' — map coming soon'; t.style.display = 'block'; t.style.opacity = .95; clearTimeout(t._h); t._h = setTimeout(() => t.style.opacity = 0, 2600); } });
+addEventListener('pointerdown', e => { if (!e.target.closest('.chip') && !e.target.closest('.dd')) closeDD(); if (!e.target.closest('#mast') && !e.target.closest('#venues')) setVen(false); });
+const venEl = $('#venues'); document.body.appendChild(venEl);
+function placeVen() { const r = $('#mast').getBoundingClientRect(); venEl.style.top = (r.bottom + 8) + 'px'; venEl.style.left = r.left + 'px'; venEl.style.width = r.width + 'px'; }
+function setVen(on) { $('#mast').classList.toggle('open', on); venEl.classList.toggle('open', on); if (on) placeVen(); }
+addEventListener('resize', () => venEl.classList.contains('open') && placeVen());
+$('#venueBtn').onclick = () => { closeDD(); setVen(!venEl.classList.contains('open')); };
+document.querySelectorAll('#venues button').forEach(b => b.onclick = () => { setVen(false); if (b.dataset.v !== 'kite') { const t = $('#toast'); t.textContent = b.innerText.split('\n').slice(0, 2).join(' · ').replace(/Soon$/, '') + ' — map coming soon'; t.style.display = 'block'; t.style.opacity = .95; clearTimeout(t._h); t._h = setTimeout(() => t.style.opacity = 0, 2600); } });
 $('#scrim').onclick = closeDD;
 function placeDock() { const m = $('#mast').getBoundingClientRect(), bb = $('#bottombar').getBoundingClientRect(); const top = m.bottom, bot = bb.height ? bb.top : innerHeight; document.body.style.setProperty('--dockY', ((top + bot) / 2).toFixed(1) + 'px'); }
 addEventListener('resize', placeDock); new ResizeObserver(placeDock).observe($('#bottombar')); placeDock();
